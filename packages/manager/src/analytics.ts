@@ -7,6 +7,7 @@ const gaInit = (i: any, s: any, o: any, g: any, r: any, a: any, m: any) => {
   (i[r] =
     i[r] ||
     function () {
+      // eslint-disable-next-line prefer-rest-params
       (i[r].q = i[r].q || []).push(arguments);
     }),
     (i[r].l = 1 * currdate);
@@ -22,6 +23,7 @@ const initGTM = (w: any, d: any, s: any, l: any, i: any) => {
     'gtm.start': new Date().getTime(),
     event: 'gtm.js',
   });
+  // eslint-disable-next-line no-var
   var f = d.getElementsByTagName(s)[0],
     j = d.createElement(s),
     dl = l != 'dataLayer' ? '&l=' + l : '';
@@ -52,7 +54,6 @@ export const initAnalytics = (production: boolean, gaID?: string) => {
 
   (window as any).ga('create', gaID, 'auto');
   (window as any).ga('set', 'anonymizeIp', true);
-  (window as any).ga('send', 'pageview');
 };
 
 /**
