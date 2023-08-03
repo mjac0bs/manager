@@ -1,5 +1,6 @@
 import { APIError } from '@linode/api-v4/lib/types';
 import { useTheme } from '@mui/material/styles';
+import { capitalize } from 'lodash';
 import * as React from 'react';
 
 import { SupportLink } from 'src/components/SupportLink';
@@ -10,9 +11,14 @@ interface Props {
 }
 
 export const SupportError = (props: Props) => {
-  const theme = useTheme();
   const { errors } = props;
-  const errorMsg = errors[0].reason.split(/(open a support ticket)/i);
+
+  const theme = useTheme();
+
+  const supportTextRegex = new RegExp(
+    /(open a support ticket|contact Support)/i
+  );
+  const errorMsg = errors[0].reason.split(supportTextRegex);
 
   return (
     <Typography
@@ -23,14 +29,14 @@ export const SupportError = (props: Props) => {
       }}
     >
       {errorMsg.map((substring: string, idx) => {
-        const openTicket = substring.match(/open a support ticket/i);
+        const openTicket = substring.match(supportTextRegex);
         if (openTicket) {
           return (
             <SupportLink
               text={
-                substring.match(/Open.*/)
-                  ? 'Open a support ticket'
-                  : 'open a support ticket'
+                substring.match(/^[A-Z]/)
+                  ? capitalize(openTicket[0])
+                  : openTicket[0]
               }
               key={`${substring}-${idx}`}
             />
