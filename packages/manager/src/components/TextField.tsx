@@ -223,12 +223,7 @@ export const TextField = (props: TextFieldProps) => {
   ) => {
     if (trimmed) {
       const trimmedValue = e.target.value.trim();
-
-      /* Input fields of type=email are trimmed by default by some browsers;
-      explicitly set the e.target.value again to trigger a rerender with updated display text. */
-      if (e.target.type === 'email') {
-        e.target.value = trimmedValue;
-      }
+      e.target.value = trimmedValue;
       setValue(trimmedValue);
     }
     if (onBlur) {

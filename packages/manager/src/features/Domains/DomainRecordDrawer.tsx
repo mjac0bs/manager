@@ -431,6 +431,9 @@ export class DomainRecordDrawer extends React.Component<
         DomainRecordDrawer.errorFields,
         this.state.errors
       )(field)}
+      onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        this.updateField(field)(e.target.value)
+      }
       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
         this.updateField(field)(e.target.value)
       }

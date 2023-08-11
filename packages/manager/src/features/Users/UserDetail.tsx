@@ -101,11 +101,19 @@ const UserDetail: React.FC = () => {
     setCreatedUsername(undefined);
   };
 
-  const handleChangeUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeUsername = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setUsername(e.target.value);
   };
 
-  const handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeEmail = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setEmail(e.target.value);
   };
 
