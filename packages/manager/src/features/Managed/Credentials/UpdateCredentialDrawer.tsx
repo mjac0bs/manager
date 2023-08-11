@@ -7,7 +7,6 @@ import { Drawer } from 'src/components/Drawer';
 import { Notice } from 'src/components/Notice/Notice';
 import { SuspenseLoader } from 'src/components/SuspenseLoader';
 import { TextField } from 'src/components/TextField';
-import { handleFormikBlur } from 'src/utilities/formikTrimUtil';
 
 import { updateLabelSchema, updatePasswordSchema } from './credential.schema';
 
@@ -142,9 +141,9 @@ const CredentialDrawer = (props: CredentialDrawerProps) => {
                   errorText={errors.username}
                   label="Username"
                   name="username"
-                  onBlur={(e) => handleFormikBlur(e, formikProps)}
                   onChange={handleChange}
                   optional
+                  trimmed
                   value={values.username}
                 />
 

@@ -37,7 +37,6 @@ import {
   handleFieldErrors,
   handleGeneralErrors,
 } from 'src/utilities/formikErrorUtils';
-import { handleFormikBlur } from 'src/utilities/formikTrimUtil';
 import {
   ExtendedIP,
   extendedIPToString,
@@ -336,9 +335,9 @@ export const CreateDomain = () => {
                 disabled={disabled}
                 label="SOA Email Address"
                 name={'soa_email'}
-                onBlur={(e) => handleFormikBlur(e, formik)}
                 onChange={formik.handleChange}
                 required
+                trimmed
                 type="email"
                 value={values.soa_email}
               />

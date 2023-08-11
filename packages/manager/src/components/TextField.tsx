@@ -221,16 +221,15 @@ export const TextField = (props: TextFieldProps) => {
   const handleBlur = (
     e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const _value = e.target.value;
-
     if (trimmed) {
+      const trimmedValue = e.target.value.trim();
+
       /* Input fields of type=email are trimmed by default by some browsers;
-      reset the value and change it back to rerender with updated display text. */
+      explicitly set the e.target.value again to trigger a rerender with updated display text. */
       if (e.target.type === 'email') {
-        e.target.value = '';
-        e.target.value = _value;
+        e.target.value = trimmedValue;
       }
-      setValue(_value.trim());
+      setValue(trimmedValue);
     }
     if (onBlur) {
       onBlur(e);

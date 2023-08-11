@@ -10,7 +10,6 @@ import { Notice } from 'src/components/Notice/Notice';
 import { TextField } from 'src/components/TextField';
 import { Typography } from 'src/components/Typography';
 import { useCreateSSHKeyMutation } from 'src/queries/profile';
-import { handleFormikBlur } from 'src/utilities/formikTrimUtil';
 import getAPIErrorFor from 'src/utilities/getAPIErrorFor';
 
 interface Props {
@@ -77,9 +76,9 @@ export const CreateSSHKeyDrawer = React.memo(({ onClose, open }: Props) => {
           label="SSH Public Key"
           multiline
           name="ssh_key"
-          onBlur={(e) => handleFormikBlur(e, formik)}
           onChange={formik.handleChange}
           rows={1.75}
+          trimmed
           value={formik.values.ssh_key}
         />
         <ActionsPanel
