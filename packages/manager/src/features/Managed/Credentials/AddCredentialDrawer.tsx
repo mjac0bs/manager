@@ -76,6 +76,7 @@ const CredentialDrawer = (props: CredentialDrawerProps) => {
                 onBlur={handleBlur}
                 onChange={handleChange}
                 optional
+                trimmed
                 value={values.username}
               />
 
