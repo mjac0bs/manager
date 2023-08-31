@@ -11,6 +11,7 @@ import { Notice } from 'src/components/Notice/Notice';
 import { RenderGuard } from 'src/components/RenderGuard';
 import EUAgreementCheckbox from 'src/features/Account/Agreements/EUAgreementCheckbox';
 import { getMonthlyPrice } from 'src/features/Kubernetes/kubeUtils';
+import { useFlags } from 'src/hooks/useFlags';
 import { useAccountAgreements } from 'src/queries/accountAgreements';
 import { useProfile } from 'src/queries/profile';
 import { useSpecificTypes } from 'src/queries/types';
@@ -49,6 +50,8 @@ export const KubeCheckoutBar: React.FC<Props> = (props) => {
     updatePool,
   } = props;
 
+  const flags = useFlags();
+
   // Show a warning if any of the pools have fewer than 3 nodes
   const showWarning = pools.some((thisPool) => thisPool.count < 3);
 
@@ -73,8 +76,26 @@ export const KubeCheckoutBar: React.FC<Props> = (props) => {
     highAvailabilityPrice !== undefined;
 
   const disableCheckout = Boolean(
-    needsAPool || gdprConditions || haConditions || region === ''
+    needsAPool ||
+      gdprConditions ||
+      haConditions ||
+      (flags.dcSpecificPricing && region === '')
   );
+
+  // Display the total cluster price in the Cluster Summary *unless* the DC-Specific Pricing flag is on and the region is unselected.
+  const totalClusterPrice =
+    flags.dcSpecificPricing && region === ''
+      ? undefined
+      : getTotalClusterPrice(
+          pools,
+          types ?? [],
+          highAvailability ? highAvailabilityPrice : undefined
+        );
+
+  // If the DC-Specific pricing flag is on, require a region selection to show HA in the Cluster Summary; otherwise, just require HA.
+  const shouldShowHAControlPlaneLineItem =
+    (flags.dcSpecificPricing && region !== '' && highAvailability) ||
+    (!flags.dcSpecificPricing && highAvailability);
 
   if (isLoading) {
     return <CircleProgress />;
@@ -87,15 +108,9 @@ export const KubeCheckoutBar: React.FC<Props> = (props) => {
           <EUAgreementCheckbox checked={hasAgreed} onChange={toggleHasAgreed} />
         ) : undefined
       }
-      calculatedPrice={
-        region !== ''
-          ? getTotalClusterPrice(
-              pools,
-              types ?? [],
-              highAvailability ? highAvailabilityPrice : undefined
-            )
-          : undefined
-      }
+      priceHelperText="Select a Region and add a Node Pool to view pricing and create a
+      cluster."
+      calculatedPrice={totalClusterPrice ?? 0}
       data-qa-checkout-bar
       disabled={disableCheckout}
       heading="Cluster Summary"
@@ -131,7 +146,7 @@ export const KubeCheckoutBar: React.FC<Props> = (props) => {
             variant="warning"
           />
         )}
-        {region != '' && highAvailability ? (
+        {shouldShowHAControlPlaneLineItem && (
           <StyledHABox>
             <StyledHAHeader>
               High Availability (HA) Control Plane
@@ -141,7 +156,7 @@ export const KubeCheckoutBar: React.FC<Props> = (props) => {
             </Typography>
             <Divider dark spacingBottom={0} spacingTop={16} />
           </StyledHABox>
-        ) : undefined}
+        )}
       </>
     </CheckoutBar>
   );

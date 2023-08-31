@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { DisplayPrice } from 'src/components/DisplayPrice';
 import { Typography } from 'src/components/Typography';
+import { useFlags } from 'src/hooks/useFlags';
 
 import {
   StyledButton,
@@ -39,8 +40,14 @@ const CheckoutBar = (props: CheckoutBarProps) => {
   } = props;
 
   const theme = useTheme();
+  const flags = useFlags();
 
   const price = calculatedPrice ?? 0;
+
+  // If the DC-Specific pricing feature flag is off, price can be zero;
+  // if the flag is on, price should never be zero because both a region
+  // and plan selection are required for pricing, so when zero, display helper text instead.
+  const shouldDisplayPrice = !flags.dcSpecificPricing ? price >= 0 : price;
 
   return (
     <StyledRoot>
@@ -58,15 +65,10 @@ const CheckoutBar = (props: CheckoutBarProps) => {
       {children}
       {
         <StyledCheckoutSection data-qa-total-price>
-          {price ? (
+          {shouldDisplayPrice ? (
             <DisplayPrice interval="mo" price={price} />
-          ) : (
-            <Typography>
-              Select a Region and add a Node Pool to view pricing and create a
-              cluster.
-            </Typography>
-          )}
-          {priceHelperText && price > 0 && (
+          ) : undefined}
+          {!shouldDisplayPrice && (
             <Typography
               sx={{
                 ...SxTypography,
