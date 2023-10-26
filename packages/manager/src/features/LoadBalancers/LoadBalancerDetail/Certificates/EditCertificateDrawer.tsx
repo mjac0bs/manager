@@ -1,6 +1,7 @@
 import { Certificate, UpdateCertificatePayload } from '@linode/api-v4';
+import { UpdateCertificateSchema } from '@linode/validation';
 import { useTheme } from '@mui/material/styles';
-import { useFormik } from 'formik';
+import { useFormik, yupToFormErrors } from 'formik';
 import React from 'react';
 
 import { ActionsPanel } from 'src/components/ActionsPanel/ActionsPanel';
@@ -9,7 +10,8 @@ import { Notice } from 'src/components/Notice/Notice';
 import { TextField } from 'src/components/TextField';
 import { Typography } from 'src/components/Typography';
 import { useLoadBalancerCertificateMutation } from 'src/queries/aglb/certificates';
-import { getErrorMap } from 'src/utilities/errorUtils';
+// import { getErrorMap } from 'src/utilities/errorUtils';
+import { getFormikErrorsFromAPIErrors } from 'src/utilities/formikErrorUtils';
 
 interface Props {
   certificate: Certificate | undefined;
@@ -50,31 +52,71 @@ export const EditCertificateDrawer = (props: Props) => {
       type: certificate?.type,
     },
     async onSubmit(values) {
-      // The user has not edited their cert or the private key, so we exclude both cert and key from the request.
       const shouldIgnoreField =
-        certificate?.certificate.trim() === values.certificate &&
-        values.key === '';
+        certificate?.certificate.trim() === formik.values.certificate &&
+        formik.values.key === '';
+      // console.log({shouldIgnoreField}, "on submit")
 
-      await updateCertificate({
-        certificate:
-          values.certificate && !shouldIgnoreField
-            ? values.certificate
-            : undefined,
-        key: values.key && !shouldIgnoreField ? values.key : undefined,
-        label: values.label,
-        type: values.type,
-      });
-      onClose();
+      try {
+        await updateCertificate({
+          certificate:
+            values.certificate && !shouldIgnoreField
+              ? values.certificate
+              : undefined,
+          key: values.key && !shouldIgnoreField ? values.key : undefined,
+          label: values.label,
+          type: values.type,
+        });
+        onClose();
+      } catch (errors) {
+        formik.setErrors(getFormikErrorsFromAPIErrors(errors));
+      }
     },
+    validate(values) {
+      const shouldIgnoreField =
+        certificate?.certificate.trim() === formik.values.certificate &&
+        formik.values.key === '';
+      // console.log({shouldIgnoreField}, "on validate")
+      // We must use `validate` instead of validationSchema because Formik decided to convert
+      // "" to undefined before passing the values to yup. This makes it hard to validate `label`.
+      // See https://github.com/jaredpalmer/formik/issues/805
+      try {
+        UpdateCertificateSchema.validateSync(
+          {
+            certificate:
+              values.certificate && !shouldIgnoreField
+                ? values.certificate
+                : undefined,
+            key: values.key && !shouldIgnoreField ? values.key : undefined,
+            label: values.label,
+            type: values.type,
+          },
+          { abortEarly: false }
+        );
+        return {};
+      } catch (error) {
+        return yupToFormErrors(error);
+      }
+    },
+    // validationSchema: UpdateCertificateSchema,
+    validateOnBlur: !error,
+    validateOnChange: true,
   });
 
-  const errorFields = ['label', 'certificate'];
+  // const errorFields = ['label', 'certificate'];
 
-  if (certificate?.type === 'downstream') {
-    errorFields.push('key');
-  }
+  // if (certificate?.type === 'downstream') {
+  //   errorFields.push('key');
+  // }
 
-  const errorMap = getErrorMap(errorFields, error);
+  // const errorMap = getErrorMap(errorFields, error);
+
+  // The user has not edited their cert or the private key, so we exclude both cert and key from the request.
+  // const shouldIgnoreField =
+  //   certificate?.certificate.trim() === formik.values.certificate &&
+  //   formik.values.key === '';
+
+  const generalError = error?.find((e) => !e.field)?.reason;
 
   const onClose = () => {
     formik.resetForm();
@@ -89,17 +131,18 @@ export const EditCertificateDrawer = (props: Props) => {
       title={`Edit ${certificate?.label ?? 'Certificate'}`}
       wide
     >
-      {errorMap.none && <Notice variant="error">{errorMap.none}</Notice>}
+      {/* {errorMap.none && <Notice variant="error">{errorMap.none}</Notice>} */}
+      {generalError && <Notice variant="error">{generalError}</Notice>}
       {!certificate ? (
         <Notice variant="error">Error loading certificate.</Notice>
       ) : (
         <form onSubmit={formik.handleSubmit}>
-          {errorMap.none && <Notice text={errorMap.none} variant="error" />}
+          {/* {errorMap.none && <Notice text={errorMap.none} variant="error" />} */}
           <Typography sx={{ marginBottom: theme.spacing(2) }}>
             {descriptionMap[certificate.type]}
           </Typography>
           <TextField
-            errorText={errorMap.label}
+            errorText={formik.errors.label}
             expand
             label="Certificate Label"
             name="label"
@@ -107,7 +150,7 @@ export const EditCertificateDrawer = (props: Props) => {
             value={formik.values.label}
           />
           <TextField
-            errorText={errorMap.certificate}
+            errorText={formik.errors.certificate}
             expand
             label={labelMap[certificate.type]}
             labelTooltipText="TODO: AGLB"
@@ -119,7 +162,7 @@ export const EditCertificateDrawer = (props: Props) => {
           />
           {certificate?.type === 'downstream' && (
             <TextField
-              errorText={errorMap.key}
+              errorText={formik.errors.key}
               expand
               label="Private Key"
               labelTooltipText="TODO: AGLB"
