@@ -1,7 +1,6 @@
 import { Certificate, UpdateCertificatePayload } from '@linode/api-v4';
-import { UpdateCertificateSchema } from '@linode/validation';
 import { useTheme } from '@mui/material/styles';
-import { useFormik, yupToFormErrors } from 'formik';
+import { useFormik } from 'formik';
 import React from 'react';
 
 import { ActionsPanel } from 'src/components/ActionsPanel/ActionsPanel';
@@ -10,7 +9,6 @@ import { Notice } from 'src/components/Notice/Notice';
 import { TextField } from 'src/components/TextField';
 import { Typography } from 'src/components/Typography';
 import { useLoadBalancerCertificateMutation } from 'src/queries/aglb/certificates';
-// import { getErrorMap } from 'src/utilities/errorUtils';
 import { getFormikErrorsFromAPIErrors } from 'src/utilities/formikErrorUtils';
 
 interface Props {
@@ -55,8 +53,6 @@ export const EditCertificateDrawer = (props: Props) => {
       const shouldIgnoreField =
         certificate?.certificate.trim() === formik.values.certificate &&
         formik.values.key === '';
-      // console.log({shouldIgnoreField}, "on submit")
-
       try {
         await updateCertificate({
           certificate:
@@ -72,49 +68,11 @@ export const EditCertificateDrawer = (props: Props) => {
         formik.setErrors(getFormikErrorsFromAPIErrors(errors));
       }
     },
-    validate(values) {
-      const shouldIgnoreField =
-        certificate?.certificate.trim() === formik.values.certificate &&
-        formik.values.key === '';
-      // console.log({shouldIgnoreField}, "on validate")
-      // We must use `validate` instead of validationSchema because Formik decided to convert
-      // "" to undefined before passing the values to yup. This makes it hard to validate `label`.
-      // See https://github.com/jaredpalmer/formik/issues/805
-      try {
-        UpdateCertificateSchema.validateSync(
-          {
-            certificate:
-              values.certificate && !shouldIgnoreField
-                ? values.certificate
-                : undefined,
-            key: values.key && !shouldIgnoreField ? values.key : undefined,
-            label: values.label,
-            type: values.type,
-          },
-          { abortEarly: false }
-        );
-        return {};
-      } catch (error) {
-        return yupToFormErrors(error);
-      }
-    },
-    // validationSchema: UpdateCertificateSchema,
+    // Disabling validateOnBlur and validateOnChange when an API error is shown prevents
+    // all API errors from disappearing when one field is changed.
     validateOnBlur: !error,
-    validateOnChange: true,
+    validateOnChange: !error,
   });
-
-  // const errorFields = ['label', 'certificate'];
-
-  // if (certificate?.type === 'downstream') {
-  //   errorFields.push('key');
-  // }
-
-  // const errorMap = getErrorMap(errorFields, error);
-
-  // The user has not edited their cert or the private key, so we exclude both cert and key from the request.
-  // const shouldIgnoreField =
-  //   certificate?.certificate.trim() === formik.values.certificate &&
-  //   formik.values.key === '';
 
   const generalError = error?.find((e) => !e.field)?.reason;
 
@@ -131,13 +89,11 @@ export const EditCertificateDrawer = (props: Props) => {
       title={`Edit ${certificate?.label ?? 'Certificate'}`}
       wide
     >
-      {/* {errorMap.none && <Notice variant="error">{errorMap.none}</Notice>} */}
       {generalError && <Notice variant="error">{generalError}</Notice>}
       {!certificate ? (
         <Notice variant="error">Error loading certificate.</Notice>
       ) : (
         <form onSubmit={formik.handleSubmit}>
-          {/* {errorMap.none && <Notice text={errorMap.none} variant="error" />} */}
           <Typography sx={{ marginBottom: theme.spacing(2) }}>
             {descriptionMap[certificate.type]}
           </Typography>
