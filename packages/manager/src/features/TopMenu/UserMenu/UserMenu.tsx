@@ -81,7 +81,7 @@ export const UserMenu = React.memo(() => {
     }
     const newToken = profile?.username.includes('proxy')
       ? getStorage('authentication/parent_token')
-      : getStorage('authentication/proxy_token');
+      : `Bearer ${import.meta.env.REACT_APP_PROXY_PAT}`;
 
     setStorage('authentication/token', newToken);
 
