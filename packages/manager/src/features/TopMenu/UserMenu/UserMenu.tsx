@@ -46,6 +46,7 @@ export const UserMenu = React.memo(() => {
   const {
     _hasAccountAccess,
     _isRestrictedUser,
+    account,
     profile,
   } = useAccountManagement();
 
@@ -95,7 +96,9 @@ export const UserMenu = React.memo(() => {
   const id = open ? 'user-menu-popover' : undefined;
 
   const { data: grants } = useGrants();
-  const userName = profile?.username ?? '';
+  const userName = profile?.username.includes('proxy')
+    ? account?.company
+    : profile?.username ?? '';
   const hasFullAccountAccess =
     grants?.global?.account_access === 'read_write' || !_isRestrictedUser;
 
@@ -212,6 +215,7 @@ export const UserMenu = React.memo(() => {
         open={open}
       >
         <Stack data-qa-user-menu minWidth={250} spacing={2}>
+          <Typography>You are currently logged in as:</Typography>
           <Typography
             color={(theme) => theme.textColors.headlineStatic}
             fontSize="1.1rem"
