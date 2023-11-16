@@ -89,8 +89,11 @@ export interface Storage {
     set: (v: 'false' | 'true') => void;
   };
   authentication: {
+    // Would need to revisit the shape of this data with multiple tokens.
     expire: AuthGetAndSet;
     nonce: AuthGetAndSet;
+    parent_token: AuthGetAndSet; // Do we need to add to the redux store?
+    proxy_token: AuthGetAndSet; // Do we need to add to the redux store?
     scopes: AuthGetAndSet;
     token: AuthGetAndSet;
   };
@@ -137,6 +140,14 @@ export const storage: Storage = {
     nonce: {
       get: () => getStorage(NONCE),
       set: (v) => setStorage(NONCE, v),
+    },
+    parent_token: {
+      get: () => getStorage(TOKEN),
+      set: (v) => setStorage(TOKEN, v),
+    },
+    proxy_token: {
+      get: () => getStorage(TOKEN),
+      set: (v) => setStorage(TOKEN, v),
     },
     scopes: {
       get: () => getStorage(SCOPES),

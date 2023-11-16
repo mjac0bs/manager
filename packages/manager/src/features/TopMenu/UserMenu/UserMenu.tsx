@@ -2,7 +2,6 @@ import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 import { Theme, styled, useMediaQuery } from '@mui/material';
 import Popover from '@mui/material/Popover';
-import { Stack } from 'src/components/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import * as React from 'react';
 
@@ -12,10 +11,12 @@ import { Divider } from 'src/components/Divider';
 import { GravatarByEmail } from 'src/components/GravatarByEmail';
 import { Hidden } from 'src/components/Hidden';
 import { Link } from 'src/components/Link';
+import { Stack } from 'src/components/Stack';
 import { Tooltip } from 'src/components/Tooltip';
 import { Typography } from 'src/components/Typography';
 import { useAccountManagement } from 'src/hooks/useAccountManagement';
 import { useGrants } from 'src/queries/profile';
+import { getStorage, setStorage } from 'src/utilities/storage';
 
 interface MenuLink {
   display: string;
@@ -62,6 +63,32 @@ export const UserMenu = React.memo(() => {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleAccountSwitch = () => {
+    // Store the current token based on the account type so the account can be swapped.
+    // This will be determined by the new `user_type`, but we don't have that currently, so rely on username to mock.
+    if (profile?.username.includes('proxy')) {
+      setStorage(
+        'authentication/proxy_token',
+        `Bearer ${import.meta.env.REACT_APP_PROXY_PAT}`
+      );
+    } else {
+      setStorage(
+        'authentication/parent_token',
+        `Bearer ${import.meta.env.REACT_APP_PARENT_PAT}`
+      );
+    }
+    const newToken = profile?.username.includes('proxy')
+      ? getStorage('authentication/parent_token')
+      : getStorage('authentication/proxy_token');
+
+    setStorage('authentication/token', newToken);
+
+    // Using a timeout just to witness the token switch in the dev console.
+    setTimeout(() => {
+      location.reload();
+    }, 3000);
   };
 
   const open = Boolean(anchorEl);
@@ -191,6 +218,9 @@ export const UserMenu = React.memo(() => {
           >
             <strong>{userName}</strong>
           </Typography>
+          <Button buttonType="outlined" onClick={handleAccountSwitch}>
+            Switch Accounts
+          </Button>
           <Box>
             <Heading>My Profile</Heading>
             <Divider color="#9ea4ae" />
