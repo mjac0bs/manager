@@ -87,9 +87,9 @@ export const UserMenu = React.memo(() => {
     setStorage('authentication/token', newToken);
 
     // Using a timeout just to witness the token switch in the dev console.
-    setTimeout(() => {
-      location.reload();
-    }, 3000);
+    // setTimeout(() => {
+    location.reload();
+    // }, 3000);
   };
 
   const open = Boolean(anchorEl);
