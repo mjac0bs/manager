@@ -96,9 +96,8 @@ export const UserMenu = React.memo(() => {
   const id = open ? 'user-menu-popover' : undefined;
 
   const { data: grants } = useGrants();
-  const userName = profile?.username.includes('proxy')
-    ? account?.company
-    : profile?.username ?? '';
+  // We'd check the 'user_type' to determine whether to display company name or now. For POC, default to company name.
+  const userName = account?.company ?? profile?.username ?? '';
   const hasFullAccountAccess =
     grants?.global?.account_access === 'read_write' || !_isRestrictedUser;
 
@@ -191,7 +190,16 @@ export const UserMenu = React.memo(() => {
           startIcon={<GravatarByEmail email={profile?.email ?? ''} />}
         >
           <Hidden mdDown>
-            <Typography sx={{ fontSize: '0.875rem' }}>{userName}</Typography>
+            {/* We'd check the 'user_type' to determine whether to display company name. For POC, default to company name. */}
+            <Stack>
+              <Typography sx={{ fontSize: '0.775rem' }}>
+                {/* For proxy accounts, we'll need to parse the username to get the parent's company name. For now, default to just username. */}
+                {account?.company ? profile?.username : ''}
+              </Typography>
+              <Typography sx={{ fontSize: '0.875rem' }}>
+                {account?.company ?? userName}
+              </Typography>
+            </Stack>
           </Hidden>
         </Button>
       </Tooltip>
