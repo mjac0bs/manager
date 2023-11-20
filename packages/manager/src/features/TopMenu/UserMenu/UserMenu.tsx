@@ -15,8 +15,12 @@ import { Stack } from 'src/components/Stack';
 import { Tooltip } from 'src/components/Tooltip';
 import { Typography } from 'src/components/Typography';
 import { useAccountManagement } from 'src/hooks/useAccountManagement';
+import { useCurrentToken } from 'src/hooks/useAuthentication';
 import { useGrants } from 'src/queries/profile';
 import { getStorage, setStorage } from 'src/utilities/storage';
+
+import { ChildAccountsDrawer } from './ChildAccountsDrawer';
+// import { useFlags } from 'launchdarkly-react-client-sdk';
 
 interface MenuLink {
   display: string;
@@ -50,6 +54,12 @@ export const UserMenu = React.memo(() => {
     profile,
   } = useAccountManagement();
 
+  // const flags = useFlags();
+
+  const currentToken = useCurrentToken();
+
+  const isProxyUser = profile?.username.includes('proxy');
+
   const matchesSmDown = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down('sm')
   );
@@ -57,6 +67,16 @@ export const UserMenu = React.memo(() => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
+
+  // Used to mock a failed API request to the ephemeral token for the child account.
+  const [isParentTokenError, setIsParentTokenError] = React.useState<boolean>(
+    false
+  );
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState<boolean>(false);
+
+  if (!currentToken) {
+    setIsParentTokenError(true);
+  }
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -67,9 +87,17 @@ export const UserMenu = React.memo(() => {
   };
 
   const handleAccountSwitch = () => {
+    // Display error if cannot account switch back to parent because parent account's token has expired.
+    if (isParentTokenError || !currentToken) {
+      return;
+    }
+
+    // Set to true to mock if proxy user's ephemeral token has timed out.
+    //setIsProxyTokenError(true);
+
     // Store the current token based on the account type so the account can be swapped.
     // This will be determined by the new `user_type`, but we don't have that currently, so rely on username to mock.
-    if (profile?.username.includes('proxy')) {
+    if (isProxyUser) {
       setStorage(
         'authentication/proxy_token',
         `Bearer ${import.meta.env.REACT_APP_PROXY_PAT}`
@@ -77,10 +105,11 @@ export const UserMenu = React.memo(() => {
     } else {
       setStorage(
         'authentication/parent_token',
-        `Bearer ${import.meta.env.REACT_APP_PARENT_PAT}`
+        currentToken
+        // `Bearer ${import.meta.env.REACT_APP_PARENT_PAT}`
       );
     }
-    const newToken = profile?.username.includes('proxy')
+    const newToken = isProxyUser
       ? getStorage('authentication/parent_token')
       : `Bearer ${import.meta.env.REACT_APP_PROXY_PAT}`;
 
@@ -230,8 +259,19 @@ export const UserMenu = React.memo(() => {
           >
             <strong>{userName}</strong>
           </Typography>
-          <Button buttonType="outlined" onClick={handleAccountSwitch}>
-            Switch Accounts
+          <Button
+            onClick={() => {
+              // Open the drawer of child accounts if on the parent account; otherwise, switch from the proxy account back to its parent.
+              if (profile?.username.includes('proxy')) {
+                handleAccountSwitch();
+              } else {
+                handleClose();
+                setIsDrawerOpen(true);
+              }
+            }}
+            buttonType="outlined"
+          >
+            Switch {profile?.username.includes('proxy') ? 'Back' : 'Accounts'}
           </Button>
           <Box>
             <Heading>My Profile</Heading>
@@ -280,6 +320,13 @@ export const UserMenu = React.memo(() => {
           )}
         </Stack>
       </Popover>
+      <ChildAccountsDrawer
+        handleAccountSwitch={handleAccountSwitch}
+        isParentTokenError={isParentTokenError}
+        onClose={() => null}
+        open={isDrawerOpen}
+        username={userName}
+      />
     </>
   );
 });
