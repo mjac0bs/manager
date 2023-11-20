@@ -7,33 +7,32 @@ import { Notice } from 'src/components/Notice/Notice';
 interface Props {
   handleAccountSwitch: () => void;
   isParentTokenError: boolean;
-  //   isProxyTokenError: boolean;
+  isProxyTokenError: boolean;
   onClose: () => void;
   open: boolean;
   username: string;
 }
 
-export const ChildAccountsDrawer = (props: Props) => {
+export const SwitchAccountDrawer = (props: Props) => {
   const {
     handleAccountSwitch,
     isParentTokenError,
+    isProxyTokenError,
     onClose: _onClose,
     open,
   } = props;
-
-  // Used to mock a failed API request to the ephemeral token for the child account.
-  const [isProxyTokenError, setIsProxyTokenError] = React.useState<boolean>();
 
   const onClose = () => {
     _onClose();
   };
 
   // Toggle to mock error from API.
-  setIsProxyTokenError(false);
+  // React.useEffect(() => {
+  // }, [isProxyTokenError, isParentTokenError]);
 
   return (
     <Drawer onClose={onClose} open={open} title="Switch Account">
-      {(isParentTokenError || isProxyTokenError) ?? (
+      {(isParentTokenError || isProxyTokenError) && (
         <Notice variant="error">There was an error switching accounts.</Notice>
       )}
       <StyledLinkButton onClick={handleAccountSwitch}>

@@ -71,6 +71,12 @@ interface TicketReply {
   ticketId: number;
 }
 
+interface SwitchableToken {
+  expire: AuthGetAndSet;
+  scopes: AuthGetAndSet;
+  token: AuthGetAndSet;
+}
+
 interface StackScriptData extends StackScriptPayload {
   id: number | string;
   updated: string;
@@ -88,12 +94,12 @@ export interface Storage {
     get: () => boolean;
     set: (v: 'false' | 'true') => void;
   };
+  // POC - Account Switching: revisit this, probably.
   authentication: {
-    // Would need to revisit the shape of this data with multiple tokens.
     expire: AuthGetAndSet;
     nonce: AuthGetAndSet;
-    parent_token: AuthGetAndSet; // Do we need to add to the redux store?
-    proxy_token: AuthGetAndSet; // Do we need to add to the redux store?
+    parent_token: SwitchableToken;
+    proxy_token: SwitchableToken;
     scopes: AuthGetAndSet;
     token: AuthGetAndSet;
   };
@@ -141,13 +147,35 @@ export const storage: Storage = {
       get: () => getStorage(NONCE),
       set: (v) => setStorage(NONCE, v),
     },
+    // POC - Account Switching: revisit this, probably.
     parent_token: {
-      get: () => getStorage(TOKEN),
-      set: (v) => setStorage(TOKEN, v),
+      expire: {
+        get: () => getStorage('authenication/parent_token/expire'),
+        set: (v) => setStorage('authenication/parent_token/expire', v),
+      },
+      scopes: {
+        get: () => getStorage('authenication/parent_token/scopes'),
+        set: (v) => setStorage('authenication/parent_token/scopes', v),
+      },
+      token: {
+        get: () => getStorage('authenication/parent_token/token'),
+        set: (v) => setStorage('authenication/parent_token/token', v),
+      },
     },
+    // POC - Account Switching: revisit this, probably.
     proxy_token: {
-      get: () => getStorage(TOKEN),
-      set: (v) => setStorage(TOKEN, v),
+      expire: {
+        get: () => getStorage('authenication/proxy_token/expire'),
+        set: (v) => setStorage('authenication/proxy_token/expire', v),
+      },
+      scopes: {
+        get: () => getStorage('authenication/proxy_token/scopes'),
+        set: (v) => setStorage('authenication/proxy_token/scopes', v),
+      },
+      token: {
+        get: () => getStorage('authenication/proxy_token/token'),
+        set: (v) => setStorage('authenication/proxy_token/token', v),
+      },
     },
     scopes: {
       get: () => getStorage(SCOPES),
