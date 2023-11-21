@@ -19,7 +19,7 @@ import { useAccountManagement } from 'src/hooks/useAccountManagement';
 import { useCurrentToken } from 'src/hooks/useAuthentication';
 import { useFlags } from 'src/hooks/useFlags';
 import { useGrants } from 'src/queries/profile';
-import { getStorage, setStorage } from 'src/utilities/storage';
+import { getStorage, setStorage, storage } from 'src/utilities/storage';
 
 import { SwitchAccountDrawer } from './SwitchAccountDrawer';
 
@@ -60,14 +60,14 @@ export const UserMenu = React.memo(() => {
   const currentToken = useCurrentToken();
 
   // const mockExpiredTime =
-  //   'Mon Nov 20 2023 22:50:52 GMT-0800 (Pacific Standard Time)'; // Uncomment this line with L116 to mock a parent token expiry.
+  //   'Mon Nov 20 2023 22:50:52 GMT-0800 (Pacific Standard Time)'; // Uncomment this line with L69 or L116 to mock a proxy or parent token expiry.
   const mockValidTime =
-    'Tues Nov 21 2023 23:50:52 GMT-0800 (Pacific Standard Time)';
+    'Tue Nov 20 2024 08:55:52 GMT-0800 (Pacific Standard Time)';
 
   // Mock the relevant information we'd get from POST /account/child-accounts/<euuid>/token.
   const proxyToken = {
-    // expiry: mockExpiredTime, // Mock an expired proxy token.
-    expiry: mockValidTime, // Mock a valid proxy token.
+    // expiry: mockExpiredTime, // Mock an expired ephemeral proxy token by uncommenting this line and commenting the line below.
+    expiry: mockValidTime, // Mock a valid proxy token by uncommenting this line and commenting the line above.
     scope: '*',
     token: import.meta.env.REACT_APP_PROXY_PAT,
   };
@@ -98,21 +98,15 @@ export const UserMenu = React.memo(() => {
 
   /**
    * Determine whether the tokens used for switchable accounts are still valid.
-   * POC - Account Switching: more specific error messages would improve UX.
    */
   const isTokenValid = () => {
     const now = new Date().toISOString();
 
-    // From a parent user, check whether proxy token is still valid before switching.
-    if (!isProxyUser && now > new Date(proxyToken.expiry).toISOString()) {
-      setIsProxyTokenError(true);
-      return false;
-    }
     // From a proxy user, check whether parent token is still valid before switching.
-    // POC - Account Switching: Keep the parent's token in authenication/expire or store it in authentication/parent_token/expire?
     if (
       isProxyUser &&
-      now > new Date(getStorage('authentication/expire')).toISOString() // Mock parent token is valid by uncommenting this line and commenting the one below.
+      now >
+        new Date(getStorage('authentication/parent_token/expire')).toISOString() // Mock parent token is valid by uncommenting this line and commenting the one below.
     ) {
       // if (isProxyUser && now > new Date(mockExpiredTime).toISOString()) { // Mock parent token is expired by uncommenting this line and commenting the one above.
       setIsParentTokenError(true);
@@ -146,28 +140,46 @@ export const UserMenu = React.memo(() => {
       return;
     }
 
-    // Store the current token based on the account type so the account can be swapped.
+    // Before swapping tokens, store the current token data based on the account type.
     if (isProxyUser) {
       setStorage(
         'authentication/proxy_token/token',
         `Bearer ${proxyToken.token}`
       );
       setStorage('authentication/proxy_token/expire', proxyToken.expiry);
-      setStorage('authentication/proxy_token/scope', proxyToken.scope);
+      setStorage('authentication/proxy_token/scopes', proxyToken.scope);
     } else {
       setStorage('authentication/parent_token/token', currentToken);
-      // POC - Account Switching: potentially set expiry and scope for parent_token.
+      setStorage(
+        'authentication/parent_token/expire',
+        storage.authentication.expire.get() // Mock parent token is valid by uncommenting this line and commenting the one below.
+        // mockExpiredTime // Mock parent token is expired by uncommenting this line and commenting the one above.
+      );
+      setStorage(
+        'authentication/parent_token/scopes',
+        storage.authentication.scopes.get()
+      );
     }
-    const newToken = isProxyUser
-      ? getStorage('authentication/parent_token/token')
-      : `Bearer ${import.meta.env.REACT_APP_PROXY_PAT}`;
 
-    setStorage('authentication/token', newToken);
+    // Swap the active token, scope, and expiry.
+    const activeToken = isProxyUser
+      ? getStorage('authentication/parent_token/token')
+      : `Bearer ${proxyToken.token}`;
+    const activeScope = isProxyUser
+      ? getStorage('authentication/parent_token/scopes')
+      : proxyToken.scope;
+    const activeExpiry = isProxyUser
+      ? getStorage('authentication/parent_token/expire')
+      : proxyToken.expiry;
+
+    setStorage('authentication/token', activeToken);
+    setStorage('authentication/scopes', activeScope);
+    setStorage('authentication/expire', activeExpiry);
 
     // Using a timeout just to witness the token switch in the dev console.
     setTimeout(() => {
       location.reload();
-    }, 1000);
+    }, 2000);
   };
 
   const open = Boolean(anchorEl);
