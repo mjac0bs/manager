@@ -59,13 +59,20 @@ export const UserMenu = React.memo(() => {
 
   const currentToken = useCurrentToken();
 
+  // const mockExpiredTime =
+  //   'Mon Nov 20 2023 22:50:52 GMT-0800 (Pacific Standard Time)'; // Uncomment this line with L116 to mock a parent token expiry.
+  const mockValidTime =
+    'Tues Nov 21 2023 23:50:52 GMT-0800 (Pacific Standard Time)';
+
   // Mock the relevant information we'd get from POST /account/child-accounts/<euuid>/token.
   const proxyToken = {
-    expiry: 'Mon Nov 20 2023 11:50:52 GMT-0800 (Pacific Standard Time)', // Currently mocking an expired proxy token.
+    // expiry: mockExpiredTime, // Mock an expired proxy token.
+    expiry: mockValidTime, // Mock a valid proxy token.
     scope: '*',
     token: import.meta.env.REACT_APP_PROXY_PAT,
   };
 
+  // This will be determined by the new `user_type`, but we don't have that currently, so rely on username to mock.
   const isProxyUser =
     profile?.username.includes('proxy') && flags.parentChildAccountAccess;
 
@@ -96,15 +103,18 @@ export const UserMenu = React.memo(() => {
   const isTokenValid = () => {
     const now = new Date().toISOString();
 
-    // From a parent user, whether proxy token is still valid before switching.
+    // From a parent user, check whether proxy token is still valid before switching.
     if (!isProxyUser && now > new Date(proxyToken.expiry).toISOString()) {
-      // console.log('The proxy token is expired!');
       setIsProxyTokenError(true);
       return false;
     }
-    // From a proxy user, whether parent token is still valid before switching.
-    if (isProxyUser && now > getStorage('authentication/parent_token/expire')) {
-      // console.log('The parent token is expired!');
+    // From a proxy user, check whether parent token is still valid before switching.
+    // POC - Account Switching: Keep the parent's token in authenication/expire or store it in authentication/parent_token/expire?
+    if (
+      isProxyUser &&
+      now > new Date(getStorage('authentication/expire')).toISOString() // Mock parent token is valid by uncommenting this line and commenting the one below.
+    ) {
+      // if (isProxyUser && now > new Date(mockExpiredTime).toISOString()) { // Mock parent token is expired by uncommenting this line and commenting the one above.
       setIsParentTokenError(true);
       return false;
     }
@@ -137,7 +147,6 @@ export const UserMenu = React.memo(() => {
     }
 
     // Store the current token based on the account type so the account can be swapped.
-    // This will be determined by the new `user_type`, but we don't have that currently, so rely on username to mock.
     if (isProxyUser) {
       setStorage(
         'authentication/proxy_token/token',
@@ -146,11 +155,8 @@ export const UserMenu = React.memo(() => {
       setStorage('authentication/proxy_token/expire', proxyToken.expiry);
       setStorage('authentication/proxy_token/scope', proxyToken.scope);
     } else {
-      setStorage(
-        'authentication/parent_token/token',
-        currentToken
-        // `Bearer ${import.meta.env.REACT_APP_PARENT_PAT}`
-      );
+      setStorage('authentication/parent_token/token', currentToken);
+      // POC - Account Switching: potentially set expiry and scope for parent_token.
     }
     const newToken = isProxyUser
       ? getStorage('authentication/parent_token/token')
@@ -161,7 +167,7 @@ export const UserMenu = React.memo(() => {
     // Using a timeout just to witness the token switch in the dev console.
     setTimeout(() => {
       location.reload();
-    }, 3000);
+    }, 1000);
   };
 
   const open = Boolean(anchorEl);
