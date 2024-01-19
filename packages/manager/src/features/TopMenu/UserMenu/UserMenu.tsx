@@ -22,7 +22,7 @@ import { useGrants } from 'src/queries/profile';
 import { getStorage, setStorage, storage } from 'src/utilities/storage';
 
 import { SwitchAccountDrawer } from './SwitchAccountDrawer';
-import { useHistory } from 'react-router-dom';
+// import { useHistory } from 'react-router-dom';
 
 interface MenuLink {
   display: string;
@@ -57,7 +57,7 @@ export const UserMenu = React.memo(() => {
   } = useAccountManagement();
 
   const flags = useFlags();
-  const history = useHistory();
+  // const history = useHistory();
 
   const currentToken = useCurrentToken();
 
@@ -126,10 +126,10 @@ export const UserMenu = React.memo(() => {
   };
 
   // Navigate to the current location, triggering a re-render without a full page reload.
-  const refreshPage = React.useCallback(() => {
-    // TODO: Parent/Child: We need to test this against the real API.
-    history.push(history.location.pathname);
-  }, [history]);
+  // const refreshPage = React.useCallback(() => {
+  //   // TODO: Parent/Child: We need to test this against the real API.
+  //   history.push(history.location.pathname);
+  // }, [history]);
 
   /**
    * Clear account switching token errors when menu closes.
@@ -185,12 +185,11 @@ export const UserMenu = React.memo(() => {
     setStorage('authentication/expire', activeExpiry);
 
     // Using a timeout just to witness the token switch in the dev console.
-    // setTimeout(() => {
-    //   location.reload();
-    // }, 2000);
-    // location.reload();
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
 
-    refreshPage();
+    // refreshPage();
   };
 
   const open = Boolean(anchorEl);
