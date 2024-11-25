@@ -43,6 +43,7 @@ export const ClusterTypePanel = (props: Props) => {
           </Typography>
         </Stack>
         <StyledDocsLinkContainer>
+          {/** @todo LKE-E: Add docs link in M3-8844. */}
           <DocsLink href="/" label="Full Cluster Features" />
         </StyledDocsLinkContainer>
       </Stack>
