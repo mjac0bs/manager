@@ -1,5 +1,5 @@
 import { TextField } from '@linode/ui';
-import { kubernetesLabelSchema } from '@linode/validation';
+// import { kubernetesLabelSchema } from '@linode/validation';
 import React, { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -26,11 +26,11 @@ export const LabelInput = (props: Props) => {
       .split(':')
       .map((str) => str.trim());
 
-    const newLabels = { ..._labels, [labelKey]: labelValue };
+    // const newLabels = { ..._labels, [labelKey]: labelValue };
 
     try {
       clearErrors();
-      kubernetesLabelSchema.validateSync(newLabels);
+      // kubernetesLabelSchema.validateSync(newLabels);
 
       // Add the new key-value pair to the existing labels object.
       setValue(

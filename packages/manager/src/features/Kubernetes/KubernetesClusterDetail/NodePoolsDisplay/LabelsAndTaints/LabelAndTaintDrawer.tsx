@@ -74,9 +74,19 @@ export const LabelAndTaintDrawer = (props: Props) => {
       for (const error of errResponse) {
         if (error.field) {
           form.setError(error.field, { message: error.reason });
+          form.setError('root', { message: 'There was an error.' });
         } else {
           form.setError('root', { message: error.reason });
         }
+
+        // if (error.field && error.field.includes('labels')) {
+        //   form.setError('root', {
+        //     message: `${error.field.split('.')[1]}: ${error.reason}`,
+        //   });
+        // }
+        // form.setError('root', {
+        //   message: `${error.reason}`,
+        // });
       }
     }
   };

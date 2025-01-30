@@ -13,9 +13,19 @@ import { StyledLabelTable } from './LabelTable.styles';
 import type { Taint } from '@linode/api-v4';
 
 export const TaintTable = () => {
-  const { setValue, watch } = useFormContext();
+  const {
+    formState: { errors },
+    setValue,
+    watch,
+  } = useFormContext();
 
   const taints: Taint[] = watch('taints');
+  const _errors = errors.taints
+    ? Object.entries(errors.taints).reduce((acc, [key, value], index) => {
+        acc[index] = [Number(key), value?.key.message];
+        return acc;
+      }, {} as Record<number, [number, string]>)
+    : undefined;
 
   const handleRemoveTaint = (removedTaint: Taint) => {
     setValue(
@@ -41,12 +51,18 @@ export const TaintTable = () => {
       <TableBody>
         {taints && taints.length > 0 ? (
           taints.map((taint, i) => {
+            const taintError: string | undefined = _errors
+              ? Object.values(_errors).find((taint) => {
+                  const [index, message] = taint;
+                  return index === i ? message : undefined;
+                })?.[1]
+              : undefined;
             return (
               <TableRow
                 data-qa-taint-row={taint.key}
                 key={`taint-row-${i}-${taint.key}`}
               >
-                <TableCell>
+                <TableCell errorCell={!!taintError} errorText={taintError}>
                   {taint.key}: {taint.value}
                 </TableCell>
                 <TableCell sx={{ paddingRight: 0 }}>
