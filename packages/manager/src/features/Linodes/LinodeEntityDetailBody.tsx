@@ -246,8 +246,8 @@ export const LinodeEntityDetailBody = React.memo((props: BodyProps) => {
                   >
                     <EncryptedStatus
                       /**
-                       * M3-9517: Manually disable LDE for LKE-E for the LA launch.
-                       * TODO - LKE-E: Clean up this enterprise cluster check once LDE is enabled for LKE-E.
+                       * M3-9517: Once LDE starts releasing regions with LDE enabled, LDE will still be disabled for the LKE-E LA launch.
+                       * TODO - LKE-E: Clean up this enterprise cluster checks once LDE is enabled for LKE-E.
                        */
                       tooltipText={
                         isLKELinode && cluster?.tier === 'enterprise'
