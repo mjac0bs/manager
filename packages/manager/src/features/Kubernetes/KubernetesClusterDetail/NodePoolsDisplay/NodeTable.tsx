@@ -1,3 +1,4 @@
+import { useAllLinodesQuery, useProfile } from '@linode/queries';
 import { Box, ErrorState, TooltipIcon, Typography } from '@linode/ui';
 import { DateTime, Interval } from 'luxon';
 import { enqueueSnackbar } from 'notistack';
@@ -20,7 +21,6 @@ import { TableRow } from 'src/components/TableRow';
 import { TableSortCell } from 'src/components/TableSortCell';
 import { TagCell } from 'src/components/TagCell/TagCell';
 import { useUpdateNodePoolMutation } from 'src/queries/kubernetes';
-import { useAllLinodesQuery, useProfile } from '@linode/queries';
 import { parseAPIDate } from 'src/utilities/date';
 import { getAPIErrorOrDefault } from 'src/utilities/errorUtils';
 
@@ -270,8 +270,20 @@ export const NodeTable = React.memo((props: Props) => {
                       </Typography>
                       <StyledVerticalDivider />
                       <EncryptedStatus
-                        encryptionStatus={encryptionStatus}
-                        tooltipText={DISK_ENCRYPTION_NODE_POOL_GUIDANCE_COPY}
+                        /**
+                         * M3-9517: Manually disable LDE for LKE-E for the LA launch.
+                         * TODO - LKE-E: Clean up these enterprise cluster checks once LDE is enabled for LKE-E.
+                         */
+                        encryptionStatus={
+                          clusterTier === 'enterprise'
+                            ? 'disabled'
+                            : encryptionStatus
+                        }
+                        tooltipText={
+                          clusterTier === 'enterprise'
+                            ? undefined
+                            : DISK_ENCRYPTION_NODE_POOL_GUIDANCE_COPY
+                        }
                       />
                     </Box>
                   ) : (
@@ -309,6 +321,7 @@ export const nodeToRow = (
   };
 };
 
+// TODO - LKE-E: Remove the enterprise cluster check once LDE is enabled for LKE-E.
 export const EncryptedStatus = ({
   encryptionStatus,
   tooltipText,

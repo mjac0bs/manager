@@ -103,7 +103,10 @@ const Panel = (props: NodePoolPanelProps) => {
   );
 
   const getPlansPanelCopy = () => {
-    // TODO - LKE-E: Remove the 'ADD_NODE_POOLS_NO_ENCRYPTION_DESCRIPTION' copy once LDE is enabled on LKE-E.
+    /**
+     * M3-9517: Manually disable LDE for LKE-E for the LA launch.
+     * TODO - LKE-E: Remove the 'ADD_NODE_POOLS_NO_ENCRYPTION_DESCRIPTION' copy once LDE is enabled on LKE-E.
+     */
     if (selectedTier === 'enterprise') {
       return `${ADD_NODE_POOLS_ENTERPRISE_DESCRIPTION} ${ADD_NODE_POOLS_NO_ENCRYPTION_DESCRIPTION}`;
     }
