@@ -184,13 +184,38 @@ export const createKubernetesCluster = (mockState: MockState) => [
                 nodes: kubeLinodeFactory.buildList(poolData.count),
               }),
               clusterId: cluster.id,
-            } as MockKubeNodePoolResponse,
+            },
             mockState
           )
       );
 
       await Promise.all(createNodePoolPromises);
       await mswDB.add('kubernetesClusters', cluster, mockState);
+
+      // Create mock Linode instances linked to the newly created mock cluster's node pool nodes.
+      const allNodePools = await mswDB.getAll('kubernetesNodePools');
+      const createdClusterNodePools = allNodePools?.filter(
+        (pool) => pool.clusterId === cluster.id
+      );
+
+      const createLinodePromises = (createdClusterNodePools || []).map(
+        (pool) => {
+          return (pool?.nodes || []).map((node) => {
+            return mswDB.add(
+              'linodes',
+              {
+                ...linodeFactory.build({
+                  lke_cluster_id: cluster.id,
+                  id: node.instance_id ?? undefined,
+                  type: pool.type,
+                }),
+              },
+              mockState
+            );
+          });
+        }
+      );
+      await Promise.all(createLinodePromises);
 
       queueEvents({
         mockState,
@@ -234,7 +259,7 @@ export const createKubernetesCluster = (mockState: MockState) => [
                 nodes: kubeLinodeFactory.buildList(poolData.count),
               }),
               clusterId: cluster.id,
-            } as MockKubeNodePoolResponse,
+            },
             mockState
           )
       );
@@ -244,8 +269,8 @@ export const createKubernetesCluster = (mockState: MockState) => [
       // Create mock Linode instances linked to the newly created mock cluster's node pool nodes.
       const allNodePools = await mswDB.getAll('kubernetesNodePools');
       const createdClusterNodePools = allNodePools?.filter(
-        (pool: MockKubeNodePoolResponse) => pool.clusterId === cluster.id
-      ) as MockKubeNodePoolResponse[];
+        (pool) => pool.clusterId === cluster.id
+      );
 
       const createLinodePromises = (createdClusterNodePools || []).map(
         (pool) => {
@@ -374,7 +399,7 @@ export const deleteKubernetesCluster = (mockState: MockState) => [
       const nodePools = await mswDB.getAll('kubernetesNodePools');
       const deleteNodePoolPromises = nodePools
         ? nodePools
-            .filter((pool: MockKubeNodePoolResponse) => pool.clusterId === id)
+            .filter((pool) => pool.clusterId === id)
             .map((pool) =>
               mswDB.delete('kubernetesNodePools', pool.id, mockState)
             )
@@ -471,7 +496,7 @@ export const createKubernetesNodePools = (mockState: MockState) => [
         return makeNotFoundResponse();
       }
 
-      const nodePool: MockKubeNodePoolResponse = {
+      const nodePool = {
         ...nodePoolFactory.build({
           nodes: kubeLinodeFactory.buildList(payload.count),
           ...payload,
@@ -479,6 +504,29 @@ export const createKubernetesNodePools = (mockState: MockState) => [
         clusterId,
       };
       await mswDB.add('kubernetesNodePools', nodePool, mockState);
+
+      // Create mock Linode instances linked to the newly created mock cluster's node pool nodes.
+      const allNodePools = await mswDB.getAll('kubernetesNodePools');
+      const createdNodePool = allNodePools?.filter(
+        (pool) => pool.clusterId === clusterId
+      );
+
+      const createLinodePromises = (createdNodePool || []).map((pool) => {
+        return (pool?.nodes || []).map((node) => {
+          return mswDB.add(
+            'linodes',
+            {
+              ...linodeFactory.build({
+                lke_cluster_id: clusterId,
+                id: node.instance_id ?? undefined,
+                type: pool.type,
+              }),
+            },
+            mockState
+          );
+        });
+      });
+      await Promise.all(createLinodePromises);
 
       return makeResponse(nodePool);
     }
@@ -498,9 +546,7 @@ export const getKubernetesNodePools = () => [
     > => {
       const clusterId = Number(params.id);
       const clusters = await mswDB.getAll('kubernetesClusters');
-      const nodePools = (await mswDB.getAll(
-        'kubernetesNodePools'
-      )) as MockKubeNodePoolResponse[];
+      const nodePools = await mswDB.getAll('kubernetesNodePools');
 
       if (!clusters || !nodePools) {
         return makeNotFoundResponse();
@@ -524,9 +570,7 @@ export const getKubernetesNodePools = () => [
       const clusterId = Number(params.id);
       const poolId = Number(params?.poolId);
       const clusters = await mswDB.getAll('kubernetesClusters');
-      const nodePools = (await mswDB.getAll(
-        'kubernetesNodePools'
-      )) as MockKubeNodePoolResponse[];
+      const nodePools = await mswDB.getAll('kubernetesNodePools');
 
       if (!clusters || !nodePools) {
         return makeNotFoundResponse();
@@ -549,6 +593,7 @@ export const updateKubernetesNodePools = (mockState: MockState) => [
       params,
       request,
     }): Promise<StrictResponse<APIErrorResponse | KubeNodePoolResponse>> => {
+      const clusterId = Number(params.id);
       const poolId = Number(params.poolId);
       const nodePools = await mswDB.getAll('kubernetesNodePools');
 
@@ -571,6 +616,18 @@ export const updateKubernetesNodePools = (mockState: MockState) => [
         nodes: kubeLinodeFactory.buildList(nodeCount),
         updated: DateTime.now().toISO(),
       };
+
+      // Create mock Linode instances linked to the updated mock cluster.
+      await mswDB.add(
+        'linodes',
+        {
+          ...linodeFactory.build({
+            lke_cluster_id: clusterId,
+            type: updatedPool.type,
+          }),
+        },
+        mockState
+      );
 
       await mswDB.update('kubernetesNodePools', poolId, updatedPool, mockState);
 

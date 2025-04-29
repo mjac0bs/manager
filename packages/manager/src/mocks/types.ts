@@ -1,3 +1,4 @@
+import type { MockKubeNodePoolResponse } from './presets/crud/handlers/kubernetes';
 import type {
   Config,
   Domain,
@@ -6,7 +7,6 @@ import type {
   Firewall,
   FirewallDevice,
   IPAddress,
-  KubeNodePoolResponse,
   KubernetesCluster,
   Linode,
   LinodeInterface,
@@ -135,7 +135,7 @@ export interface MockState {
   firewalls: Firewall[];
   ipAddresses: IPAddress[];
   kubernetesClusters: KubernetesCluster[];
-  kubernetesNodePools: KubeNodePoolResponse[];
+  kubernetesNodePools: MockKubeNodePoolResponse[];
   linodeConfigs: [number, Config][];
   linodeInterfaces: [number, LinodeInterface][];
   linodes: Linode[];
