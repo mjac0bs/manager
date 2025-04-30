@@ -11,6 +11,8 @@ import { reportException } from 'src/exceptionReporting';
 export const useAdobeAnalytics = () => {
   const history = useHistory();
 
+  // console.log({ADOBE_ANALYTICS_URL})
+
   React.useEffect(() => {
     // Load Adobe Analytics Launch Script
     if (!!ADOBE_ANALYTICS_URL) {
